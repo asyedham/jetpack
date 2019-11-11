@@ -9,6 +9,7 @@ lab_name: scale
 ansible_ssh_user: root
 ansible_ssh_pass: password
 ansible_ssh_key: "{{ ansible_user_dir }}/.ssh/id_rsa"
+log_directory: "{{ ansible_user_dir }}/jetpack/log_dir"
 osp_release: 13
 osp_puddle: passed_phase2
 controller_count: 3
