@@ -22,6 +22,15 @@
               ansible_python_interpreter: "{{ python_interpreter }}"
               ansible_user: "stack"
             become: true
+          
+          - name: add ip address on undercloud
+            shell:
+              sudo ip a a 192.168.24.25/24 brd 192.168.24.255 dev p2p4
+            ignore_errors: true
+            changed_when: false
+            delegate_to: "{{ undercloud_hostname }}"
+            when: tls_everywhere == true
+
 
           - name: set undercloud_local_interface
             set_fact:
@@ -76,6 +85,18 @@
         copy:
           dest: /root/infrared/.venv/lib/python2.7/site-packages/infrared/common/roles/tls-everywhere/tasks/set_undercloud_dns.yml
           src: freeipa/set_undercloud_dns.yml
+     
+      - name: add task for ipa-client execute
+        blockinfile:
+          path: /root/infrared/.venv/lib/python2.7/site-packages/infrared/common/roles/tls-everywhere/tasks/prepare_undercloud.yml
+          insertbefore:  Prepare novajoin to work
+          block: |
+            ##ipa-client
+              - name: execute ipa-client
+                shell: |
+                    sudo ipa-client-install --principal=admin --password={{ freeipa_admin_password }} --server={{ freeipa_server_hostname }} --domain={{ freeipa_cloud_domain }} --realm={{ freeipa_realm }} --hostname={{ freeipa_undercloud_hostname }} --unattended --force-join
+                changed_when: false
+
  
 
       - name: Set container params
