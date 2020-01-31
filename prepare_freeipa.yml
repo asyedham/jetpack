@@ -1,0 +1,62 @@
+---
+- hosts: freeipa
+  vars:
+    ctlplane_interface: "{{ hostvars['localhost']['ctlplane_interface'] }}"
+  tasks:
+    - name: Clean network interfaces
+      shell: |
+        /root/clean-interfaces.sh --nuke
+      changed_when: false
+
+    - name: remove the previous epel package
+      yum:
+        name: epel-release
+        state: absent
+      ignore_errors: true
+
+
+    - name: install epel on freeipa
+      yum:
+        name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
+        state: latest
+
+    - name: install haveged on freeipa
+      yum:
+        name: haveged
+        state: latest
+    
+    - name: remove the previous installed ipa server
+      shell: |
+        echo yes | ipa-server-install --uninstall
+      ignore_errors: true
+
+    - name: get freeipa_local_interface
+      shell: |
+        for i in /sys/class/net/*
+        do
+          udevcontent=`udevadm info -p $i --query property`
+          if [[ $udevcontent =~ {{ ctlplane_interface }} ]]
+          then
+            freeipa_local_interface=`echo $i | cut -d '/' -f 5`
+            break
+          fi
+        done
+        echo $freeipa_local_interface
+      register: freeipa_interface
+
+    -  name: set freeipa_local_interface
+       set_fact:
+         freeipa_local_interface: "{{ freeipa_interface.stdout }}"
+    - debug:
+        msg: "{{ freeipa_local_interface }}"
+
+    - name: add ip address for free ipa
+      shell: |
+        ip a a 192.168.24.250/24 brd 192.168.24.255 dev  {{  freeipa_local_interface }}
+      ignore_errors: true
+      changed_when: false
+
+    - name: disable ipv6 on freeipa
+      shell: |
+        echo "net.ipv6.conf.all.disable_ipv6 = 0" > /etc/sysctl.conf
+        sysctl -p
