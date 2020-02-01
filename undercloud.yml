@@ -94,8 +94,10 @@
             ##ipa-client
               - name: execute ipa-client
                 shell: |
+                    ipa-client-install --uninstall
                     sudo ipa-client-install --principal=admin --password={{ freeipa_admin_password }} --server={{ freeipa_server_hostname }} --domain={{ freeipa_cloud_domain }} --realm={{ freeipa_realm }} --hostname={{ freeipa_undercloud_hostname }} --unattended --force-join
                 changed_when: false
+                ignore_errors: true
 
  
 
