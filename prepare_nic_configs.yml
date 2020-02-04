@@ -84,6 +84,12 @@
             dest: "{{ ansible_user_dir }}/virt/network/network-environment.yaml.j2"
             force: yes
 
+      - name: prepare public_vip.yaml
+        template:
+            src: public_vip.yaml.j2
+            dest: "{{ freeipa_templates_basedir }}/public_vip.yaml"
+        when: tls_everywhere == true
+
       - name: prepare controller.yaml.j2
         template:
             src: "{{ (osp_release|int > 10) | ternary('controller.yaml.j2', 'osp10_controller.yaml.j2') }}"

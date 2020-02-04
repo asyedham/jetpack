@@ -7,7 +7,7 @@ undercloud_conf: "{{ ansible_user_dir }}/undercloud.conf"
 log_directory: "{{ ansible_user_dir }}/jetpack/logs"
 cloud_name: cloud16
 lab_name: scale
-ansible_ssh_pass: 
+ansible_ssh_pass:
 ansible_ssh_key: "{{ ansible_user_dir }}/.ssh/id_rsa"
 osp_release: 13
 osp_puddle: passed_phase2
@@ -22,7 +22,7 @@ alias:
   lab_url: "http://quads.alias.bos.scalelab.redhat.com"
   machine_types:
     dell:
-      740xd: 
+      740xd:
         interfaces: [enp25s0f0, enp25s0f1, enp140s0f0, enp140s0f1]
     supermicro:
       6029r:
@@ -34,7 +34,7 @@ scale:
   lab_url: "http://quads.rdu2.scalelab.redhat.com"
   machine_types:
     supermicro:
-      1029p: 
+      1029p:
         interfaces: [enp94s0f0, enp94s0f1, enp94s0f2, enp94s0f3]
       1029u:
         interfaces: [enp175s0f0, enp175s0f1, enp216s0f0, enp216s0f1]
@@ -47,9 +47,9 @@ scale:
       6048p:
         interfaces:  []
     dell:
-      r620: 
+      r620:
         interfaces: [enp66s0f2, enp66s0f3, enp1s0f0, enp1s0f1]
-      r630: 
+      r630:
         interfaces: [enp1s0f0, enp1s0f1, enp1s0f2, enp1s0f3]
       r730xd:
         interfaces: [enp1s0f0, enp1s0f1, enp130s0f0, enp130s0f1]
@@ -83,7 +83,7 @@ external_gateway: 172.17.5.1/24
 external_network_broadcast: 172.17.5.255
 external_network_vlan_id: 300
 clean_debug: False
-#adding changes 
+#adding changes
 external_net_cidr: 172.17.5.0/24
 external_allocation_pools_start: 172.17.5.50
 external_allocation_pools_end: 172.17.5.150
@@ -123,5 +123,6 @@ virtual_uc_ctlplane_name: em1
 freeipa_admin_password: 12345678
 freeipa_cloud_domain: redhat.local
 freeipa_server_hostname: freeipa.redhat.local
-freeipa_realm: REDHAT.LOCAL 
+freeipa_realm: REDHAT.LOCAL
 freeipa_undercloud_hostname: undercloud.redhat.local
+freeipa_templates_basedir: ~/virt
