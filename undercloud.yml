@@ -115,7 +115,7 @@
         args:
             chdir: "{{ infrared_dir }}"
         changed_when: false
-        when: tls_everywhere != false
+        when: tls_everywhere != true
 
       - name: run tripleo-undercloud with tls
         shell: |
