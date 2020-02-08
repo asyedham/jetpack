@@ -22,19 +22,20 @@
               ansible_python_interpreter: "{{ python_interpreter }}"
               ansible_user: "stack"
             become: true
-          
-          - name: add ip address on undercloud
-            shell:
-              sudo ip a a 192.168.24.25/24 brd 192.168.24.255 dev p2p4
-            ignore_errors: true
-            changed_when: false
-            delegate_to: "{{ undercloud_hostname }}"
-            when: tls_everywhere == true
-
 
           - name: set undercloud_local_interface
             set_fact:
               undercloud_local_interface: "{{ local_interface.stdout }}"
+   
+          - name: add ip address on undercloud_local_interface
+            become: true
+            shell:
+              ip a a "{{ freeipa_uc_ip }}" brd "{{ freeipa_brd }}" dev "{{ undercloud_local_interface }}"
+            changed_when: false
+            ignore_errors: yes
+            delegate_to: "{{ undercloud_hostname }}"
+            when: tls_everywhere == true
+
         when: virtual_uc != true
 
       - name: set undercloud_local_interface
@@ -47,43 +48,21 @@
             src: undercloud.conf.j2
             dest: "{{ undercloud_conf }}"
 
-      - include_tasks: tasks/copykeys.yml
-        vars:
-          hostname: "{{ freeipa_hostname }}"
-          ssh_user: "root"
-
-      - include_tasks: tasks/get_interpreter.yml
-        vars:
-          hostname: "{{ freeipa_hostname }}"
-          user: "root"
-
-      - name: python interpreter
-        set_fact:
-          python_interpreter: "{{ (python_version.stderr_lines|length > 0) | ternary('/usr/libexec/platform-python', '/usr/bin/python') }}"
-
-      - name: add freeipa_host to inventory file
-        add_host:
-          name: "freeipa"
-          ansible_host: "{{ freeipa_hostname }}"
-          ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
-          ansible_user: "root"
-          ansible_python_interpreter: "{{ python_interpreter }}"
-
       - name: freeipa setting
         copy:
-          dest: /root/infrared/.venv/lib/python2.7/site-packages/infrared/common/roles/tls-everywhere/defaults/main.yml
-          src: /root/jetpack/freeipa/main.yml
+          dest: "{{ infrared_tls_dir }}/defaults/main.yml"
+          src: "{{ freeipa_vars }}/freeipa.yml"
 
       - name: replace value for freeipa_local_interface var
         vars:
           freeipa_interface: "{{ hostvars['freeipa']['freeipa_local_interface'] }}"
         shell: |
           echo {{ freeipa_interface }}
-          sed -i 's/freeipa_local_interface/{{ freeipa_interface }}/g' /root/infrared/.venv/lib/python2.7/site-packages/infrared/common/roles/tls-everywhere/defaults/main.yml
+          sed -i 's/freeipa_local_interface/{{ freeipa_interface }}/g' {{ infrared_tls_dir }}/defaults/main.yml
 
       - name: set_dns for undercloud 
         copy:
-          dest: /root/infrared/.venv/lib/python2.7/site-packages/infrared/common/roles/tls-everywhere/tasks/set_undercloud_dns.yml
+          dest: "{{ infrared_tls_dir }}/tasks/set_undercloud_dns.yml"
           src: freeipa/set_undercloud_dns.yml
      
       - name: add task for ipa-client execute
@@ -99,8 +78,6 @@
                 changed_when: false
                 ignore_errors: true
 
- 
-
       - name: Set container params
         set_fact:
           container_params: "--registry-mirror {{ registry_mirror }} --registry-namespace {{ registry_namespace }}"
@@ -113,8 +90,22 @@
           --version {{ osp_release }} \
           --build {{ osp_puddle }} \
           --images-task rpm \
+          --config-file {{ undercloud_conf }} {{ container_params }} > {{ log_directory }}/undercloud_install.log 2>&1
+        args:
+            chdir: "{{ infrared_dir }}"
+        changed_when: false
+        when: tls_everywhere != true
+
+      - name: run tripleo-undercloud tls
+        shell: |
+          source {{ infrared_dir }}/.venv/bin/activate
+          infrared tripleo-undercloud -vv \
+          --version {{ osp_release }} \
+          --build {{ osp_puddle }} \
+          --images-task rpm \
           --config-file {{ undercloud_conf }} {{ container_params }} --tls-everywhere true > {{ log_directory }}/undercloud_install.log 2>&1
         args:
             chdir: "{{ infrared_dir }}"
         changed_when: false
+        when: tls_everywhere == true
 

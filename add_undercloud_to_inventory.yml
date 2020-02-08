@@ -25,7 +25,7 @@
         ansible_user: "root"
         ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
         ansible_python_interpreter: "{{ python_interpreter }}"
-
+      when: tls_everywhere == true
 
     - name: generate inventory file
       template:

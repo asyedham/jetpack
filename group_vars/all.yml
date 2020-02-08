@@ -5,7 +5,7 @@ infrared_hosts_file: "{{ infrared_workspaces_dir }}/active/hosts"
 instackenv_file: "{{ ansible_user_dir }}/instackenv.json"
 undercloud_conf: "{{ ansible_user_dir }}/undercloud.conf"
 log_directory: "{{ ansible_user_dir }}/jetpack/logs"
-cloud_name: cloud16
+cloud_name: cloud09
 lab_name: scale
 ansible_ssh_pass: 
 ansible_ssh_key: "{{ ansible_user_dir }}/.ssh/id_rsa"
@@ -120,6 +120,11 @@ undercloud_local_interface: eth0
 virtual_uc_ctlplane_name: em1
 
 #freeipa variables
+infrared_tls_dir: ~/infrared/.venv/lib/python2.7/site-packages/infrared/common/roles/tls-everywhere
+freeipa_vars: ~/jetpack/freeipa/group_vars
+freeipa_uc_ip: 192.168.24.25/24
+freeipa_brd: 192.168.24.255
+freeipa_ip: 192.168.24.250/24 
 freeipa_admin_password: 12345678
 freeipa_cloud_domain: redhat.local
 freeipa_server_hostname: freeipa.redhat.local

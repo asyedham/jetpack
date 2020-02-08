@@ -23,29 +23,6 @@
         ansible_user: "root"
         ansible_python_interpreter: "{{ python_interpreter }}"
 
-    - include_tasks: tasks/copykeys.yml
-      vars:
-        hostname: "{{ freeipa_hostname }}"
-        ssh_user: "root"
-
-    - include_tasks: tasks/get_interpreter.yml
-      vars:
-        hostname: "{{ freeipa_hostname }}"
-        user: "root"
-
-    - name: python interpreter
-      set_fact:
-        python_interpreter: "{{ (python_version.stderr_lines|length > 0) | ternary('/usr/libexec/platform-python', '/usr/bin/python') }}"
-
-    - name: add freeipa_host to inventory file
-      add_host:
-        name: "freeipa"
-        ansible_host: "{{ freeipa_hostname }}"
-        ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
-        ansible_user: "root"
-        ansible_python_interpreter: "{{ python_interpreter }}"
-
-
 - hosts: undercloud
   vars:
     user: "stack"
