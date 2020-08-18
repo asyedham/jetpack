@@ -37,6 +37,11 @@
   tags:
     - external
 
+- import_playbook: provisioning_baremetal.yml
+  tags:
+    - provision_baremetal
+  when: novaless_deploy
+
 - import_playbook: overcloud.yml
   tags:
     - overcloud

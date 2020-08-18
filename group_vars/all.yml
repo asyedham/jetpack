@@ -177,3 +177,7 @@ browbeat: true
 #      ram: 16384
 #      disk: 40
 #      vcpus: 4
+
+#For Novaless deployment enable the variable
+novaless_deploy: false
+
