@@ -193,3 +193,6 @@ scale_compute_vms: false
 #dhcp_start: 192.168.0.5
 #dhcp_end: 192.168.10.254
 #inspection_iprange: 192.168.11.1,192.168.20.254
+
+#Composable roles
+composable_role: false
