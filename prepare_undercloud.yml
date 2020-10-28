@@ -103,3 +103,9 @@
       shell: |
         ssh-keygen -q -t rsa -f /home/{{ user }}/.ssh/id_rsa -C "" -N ""
       when: ssh_keys_result.stat.exists == False
+
+    - name: set max_concurrent_builds via hieradata
+      copy:
+        content: 'nova::compute::ironic::max_concurrent_builds: {{ max_concurrent_builds }}'
+        dest: /home/{{ user }}/hiera_override.yaml
+      when: max_concurrent_builds is defined

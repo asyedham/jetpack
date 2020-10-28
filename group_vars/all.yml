@@ -205,3 +205,5 @@ composable_roles: false
 # controller_ifaces: []
 #controller_machine_type: "1029p"
 
+#option to set max_concurrent_builds
+#max_concurrent_builds: 5

@@ -166,3 +166,6 @@ composable_roles: false
 #controller_machine_type: "1029p"
 
 new_nodes_instack: "{{ playbook_dir }}/newnodes.json"
+
+#option to set max_concurrent_builds
+#max_concurrent_builds: 5
