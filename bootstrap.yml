@@ -1,7 +1,7 @@
 - hosts: localhost
   tasks:
       - name: install packages
-        include_tasks: tasks/install_packages.yml
+        include_tasks: install_packages.yml
 
       - name: check if ssh key exists
         stat:
@@ -14,10 +14,10 @@
         when: sshkey.stat.exists == False
 
       - name: load instackenv file
-        include_tasks: tasks/load_instackenv.yml
+        include_tasks: load_instackenv.yml
 
       - name: setup infrared
-        include_tasks: tasks/setup_infrared.yml
+        include_tasks: setup_infrared.yml
 
       - name: add localhost to inventory file
         add_host:

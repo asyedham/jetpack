@@ -9,13 +9,13 @@
         files_matching: shift_stack_vars.yaml
 
     - name: create flavors
-      include_tasks: tasks/create_flavors.yml
+      include_tasks: create_flavors.yml
 
     - name: create new user and project
       vars:
         project_name: "{{ osp_project_name }}"
         user_name: "{{ osp_user_name }}"
-      include_tasks: tasks/create_project_and_user.yml
+      include_tasks: create_project_and_user.yml
 
     - name: get "{{ osp_project_name }}" tenant id
       shell: source /home/stack/overcloudrc && openstack project show {{ osp_project_name }} -f value -c id

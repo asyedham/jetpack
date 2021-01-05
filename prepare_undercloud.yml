@@ -1,12 +1,12 @@
 ---
 - hosts: localhost
   tasks:
-    - include_tasks: tasks/copykeys.yml
+    - include_tasks: copykeys.yml
       vars:
         hostname: "{{ undercloud_hostname }}"
         ssh_user: "root"
 
-    - include_tasks: tasks/get_interpreter.yml
+    - include_tasks: get_interpreter.yml
       vars:
         hostname: "{{ undercloud_hostname }}"
         user: "root"

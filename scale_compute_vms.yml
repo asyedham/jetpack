@@ -41,7 +41,7 @@
         needed_os: "{{ (lab_name == 'scale') | ternary('CentOS 7', 'CentOS 7.7') }}"
         hypervisor_host: "{{ hyp }}"
         hypervisor_password: "{{ ansible_ssh_pass }}"
-      include_tasks: tasks/install_os.yml
+      include_tasks: install_os.yml
       with_items: "{{ hostname_list }}"
       loop_control:
         loop_var: hyp
@@ -56,7 +56,7 @@
       with_items: "{{ async_install }}"
       when: async_install is defined
 
-    - include_tasks: tasks/copykeys.yml
+    - include_tasks: copykeys.yml
       vars:
         hostname: "{{ hyp }}"
         ssh_user: "root"
@@ -65,7 +65,7 @@
       loop_control:
         loop_var: hyp
 
-    - include_tasks: tasks/get_interpreter.yml
+    - include_tasks: get_interpreter.yml
       vars:
         hostname: "{{ hostname_list[0] }}"
         user: "root"

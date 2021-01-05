@@ -19,7 +19,7 @@
         needed_os: "RHEL {{ osp_rhel_mapping[osp_release|float] }}"
         hypervisor_host: "{{ undercloud_hostname }}"
         hypervisor_password: "{{ ansible_ssh_pass }}"
-      include_tasks: tasks/install_os.yml
+      include_tasks: install_os.yml
 
     - name: Wait for undercloud to be available
       async_status:

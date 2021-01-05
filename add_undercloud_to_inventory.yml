@@ -4,7 +4,7 @@
     infrared_hosts_dir: "{{ infrared_workspaces_dir }}/active"
     inventory_file_name: "hosts-updated"
   tasks:
-    - include_tasks: tasks/get_interpreter.yml
+    - include_tasks: get_interpreter.yml
       vars:
         hostname: "{{ undercloud_hostname }}"
         user: "stack"
