@@ -1,0 +1,70 @@
+---
+- name: set hammer build command
+  set_fact:
+    hammer_build_cmd: []
+
+- name: set hammer build command
+  vars:
+    medium: "RHEL Local"
+  set_fact:
+    hammer_build_cmd: "{{ hammer_build_cmd|default([])+ [ hammer -u {{ cloud_name }} -p {{ chassis_password }}  host update --name {{ item.0 }} --build 1 --operatingsystem '{{ os_install }}' --medium '{{ medium }}' --partition-table 'generic-rhel' --overwrite 1 ] }}"
+  when: lab_name == "scale" and item.1 == '1029u'
+  with_together:
+    - "{{ host_list.results }}"
+    - "{{ machine_types }}"
+
+- name: set hammer build params
+  vars:
+    medium: "{{ os_install }}"
+  set_fact:
+    hammer_build_cmd: "{{ hammer_build_cmd|default([])+ [ hammer -u {{ cloud_name }} -p {{ chassis_password }}  host update --name {{ item }} --build 1 --operatingsystem '{{ os_install }}' --medium '{{ medium }}' --partition-table 'ALIAS-Partition' --overwrite 1 ] }}"
+  when: lab_name == "alias" and item.1 == '1029u'
+  with_together:
+    - "{{ host_list.results }}"
+    - "{{ machine_types }}"
+
+- name: update host to install new os on 1029u
+  shell: "{{ item }}"
+  delegate_to: "{{ hammer_host }}"
+  with_items:
+    - "{{ hammer_build_cmd }}"
+  vars:
+    ansible_user: root
+    ansible_python_interpreter: "{{ hammer_python_interpreter }}"
+
+- name: set the host to PXE boot (Supermicro)
+  shell: ipmitool -I lanplus -H mgmt-{{ item.0 }} -U quads -P {{ chassis_password }} chassis bootdev pxe options=persistent
+  when: vendor is defined and vendor == "supermicro" and item.1 == '1029u'
+  with_together:
+    - "{{ host_list.results }}"
+    - "{{ machine_types }}"
+
+  delegate_to: "{{ hammer_host }}"
+  vars:
+    ansible_user: root
+    ansible_python_interpreter: "{{ hammer_python_interpreter }}"
+
+- name: power cycle the host (Supermicro)
+  shell: ipmitool -I lanplus -H mgmt-{{ item.0 }} -U quads -P {{ chassis_password }} chassis power cycle
+  when: vendor is defined and vendor == "supermicro" and item.1 == '1029u'
+  with_together:
+    - "{{ host_list.results }}"
+    - "{{ machine_types }}"
+  delegate_to: "{{ hammer_host }}"
+  vars:
+    ansible_user: root
+    ansible_python_interpreter: "{{ hammer_python_interpreter }}"
+
+- name: waiting for the host to be available
+  wait_for:
+    port: 22
+    host: "{{ item }}"
+    timeout: 3000
+    connect_timeout: 30
+    sleep: 5
+  register: hyp_reachable
+  with_items:
+    - "{{ host_list.results }}"
+  delegate_to: localhost
+  async: 3000
+  poll: 0

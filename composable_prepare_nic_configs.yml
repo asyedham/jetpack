@@ -22,6 +22,14 @@
         with_items: "{{ machine_types }}"
 
       - block:
+          - name: try ssh on the overcloud nodes as root user
+            shell: |
+             sshpass -p {{ ansible_ssh_pass }}  ssh -o 'PreferredAuthentications=password' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -q root@{{ host_list.results.item.0 }} 'cat /etc/redhat-release'
+        rescue:
+          - name: reprovision 1029u
+            include_tasks: install_os_1029u.yml
+
+      - block:
           - name: Get Product Name of 1029u
             shell: |
               dmidecode -t system | grep "Product Name" | cut -d '-' -f3
