@@ -52,3 +52,4 @@
     chdir: "{{ infrared_dir }}"
   vars:
       workspace_name: "{{ 'workspace_' + ansible_date_time.date + '_' + ansible_date_time.time|string|replace(':','-') }}"
+
