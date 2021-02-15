@@ -1,4 +1,6 @@
 ---
+# tasks file for fault-tolerance-introspection
+
 - name: Get output of bulk introspection status and store as yaml
   shell: |
        source ~/stackrc

@@ -1,0 +1,95 @@
+---
+# tasks file for composable
+
+- name: create flavors
+  shell: |
+    source ~/stackrc
+    openstack flavor create --id auto --ram 4096 --disk 40 --vcpus 1 baremetal{{ item }}
+    openstack flavor set --property "capabilities:boot_option"="local" --property "capabilities:profile"="baremetal{{ item }}" baremetal{{ item }}
+    openstack flavor set baremetal{{ item }} --property "resources:VCPU"="0"
+    openstack flavor set baremetal{{ item }} --property "resources:MEMORY_MB"="0"
+    openstack flavor set baremetal{{ item }} --property "resources:DISK_GB"="0"
+    openstack flavor set baremetal{{ item }} --property "resources:CUSTOM_BAREMETAL"="1"
+  with_items: "{{ machine_types }}"
+
+- name: copy roles directory
+  command: |
+    cp -r /usr/share/openstack-tripleo-heat-templates/roles /home/stack
+
+- name: copy roles directory
+  command:  |
+    cp -r ~/roles/Compute.yaml ~/roles/Compute{{ item }}.yaml
+  with_items: "{{ machine_types }}"
+
+- name: replace control plane interface
+  lineinfile:
+    path: "/home/stack/roles/Compute{{ item }}.yaml"
+    regexp: '- name:'
+    line: "- name: Compute{{ item }}"
+  with_items: "{{ machine_types }}"
+
+- name: replace control plane interface
+  lineinfile:
+    path: "/home/stack/roles/Compute{{ item }}.yaml"
+    regexp: '  HostnameFormatDefault:'
+    line: "  HostnameFormatDefault: 'compute{{ item }}-%index%'"
+  with_items: "{{ machine_types }}"
+
+- block:
+    - name: copy role for computePCI
+      command: |
+        cp -r ~/roles/Compute.yaml ~/roles/Compute{{ item }}PCI.yaml
+      when: item == pci_node_type
+      with_items: "{{ machine_types }}"
+
+    - name: replace control plane interface PCI
+      lineinfile:
+        path: "/home/stack/roles/Compute{{ item }}PCI.yaml"
+        regexp: '- name:'
+        line: "- name: Compute{{ item }}PCI"
+      when: item == pci_node_type
+      with_items: "{{ machine_types }}"
+
+    - name: replace control plane interface PCI
+      lineinfile:
+        path: "/home/stack/roles/Compute{{ item }}PCI.yaml"
+        regexp: '  HostnameFormatDefault:'
+        line: "  HostnameFormatDefault: '%stackname%-compute{{ item }}pci-%index%'"
+      when: item == pci_node_type
+      with_items: "{{ machine_types }}"
+  when: passthrough_nvme is defined and pci_node_type is defined
+
+- name: set roles
+  vars:
+    roles: "{{ ('Controller' + ' CephStorage') if ceph_enabled else 'Controller' }}"
+  set_fact:
+    roles: "{{ roles + ' Compute' + item }}"
+  when: passthrough_nvme is not defined
+  with_items: "{{ machine_types }}"
+
+- name: set roles
+  vars:
+    roles: "{{ 'Controller' + ' CephStorage' + ( ' Compute' + pci_node_type + 'PCI') if ceph_enabled else 'Controller' + ( ' Compute' + pci_node_type + 'PCI')  }}"
+  set_fact:
+    roles: "{{ roles + ' Compute' + item }}"
+  when: passthrough_nvme is defined and pci_node_type is defined
+  with_items: "{{ machine_types }}"
+
+- name: generate roles_data
+  shell: |
+    source ~/stackrc
+    openstack overcloud roles generate -o ~/roles_data.yaml --roles-path ~/roles {{ roles }}
+  args:
+    chdir: "/home/stack"
+
+- name: Setting profile for node type
+  shell: |
+    source ~/stackrc
+    for i in $(openstack baremetal node list --format value -c UUID); do
+      if [[ `openstack baremetal node show $i --fields driver_info -f json | jq '.driver_info.ipmi_address'` =~ {{ item }} ]]
+      then
+        openstack baremetal node set $i --property capabilities=profile:baremetal{{ item }},cpu_vt:true,cpu_hugepages:true,boot_option:local,cpu_txt:true,cpu_aes:true,cpu_hugepages_1g:true,boot_mode:bios
+      fi
+    done
+  with_items: "{{ machine_types }}"
+

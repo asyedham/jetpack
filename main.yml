@@ -6,14 +6,20 @@
 - import_playbook: scale_compute_vms.yml
   when: scale_compute_vms == true
 
-- import_playbook: setup_undercloud.yml
-  tags:
-    - undercloud
-    - introspect
-    - tag
-    - composable
-    - overcloud
-  when: virtual_uc != true
+- hosts: localhost
+  gather_facts: yes
+  vars:
+    chassis_password:  "{{ instackenv_content.nodes[0].pm_password }}"
+    osp_rhel_mapping:
+      10: 7.7
+      13: 7.9
+      14: 7.7
+      15: 8.0
+      16: 8.1
+      16.1: 8.2
+  roles:
+    - { role: install-update-os, tags: [ undercloud, introspect, tag, composable, overcloud], when: virtual_uc != true }
+    - { role: set-boot-order, tags: [ undercloud, introspect, tag, composable, overcloud], when: virtual_uc != true }
 
 - import_playbook: virtual_undercloud.yml
   tags:
@@ -24,73 +30,48 @@
     - overcloud
   when: virtual_uc == true
 
-- import_playbook: add_undercloud_to_inventory.yml
-  tags:
-    - undercloud
-    - introspect
-    - tag
-    - composable
-    - overcloud
+- hosts: localhost
+  gather_facts: yes
+  roles:
+    - { role: add-undercloud-to-inventory, tags: [ undercloud, introspect, tag, composable, overcloud ] }
+    - { role: prepare-nic-configs, tags: [ undercloud, introspect, tag, overcloud ], when: composable_roles == false }
+    - { role: composable-preapare-nic-configs, tags: [ undercloud, introspect, tag, composable, overcloud ], when: composable_roles }
+    - { role: undercloud, tags: undercloud }
+    - { role: introspect, tags: introspect }
 
-- import_playbook: prepare_nic_configs.yml
-  tags:
-    - undercloud
-    - introspect
-    - tag
-    - composable
-    - overcloud
-  when: composable_roles == false
+- hosts: undercloud
+  roles:
+    - { role: fault-tolerance-introspection, tags: introspect }
 
-- import_playbook: composable_prepare_nic_configs.yml
-  tags:
-    - undercloud
-    - introspect
-    - tag
-    - composable
-    - overcloud
-  when: composable_roles
+- hosts: localhost
+  gather_facts: yes
+  roles:
+    - { role: tag, tags: tag }
+    - { role: composable, tags:  composable, when: composable_roles }
 
-- import_playbook: undercloud.yml
-  tags:
-    - undercloud
-- import_playbook: introspect.yml
-  tags:
-    - introspect
+- hosts: undercloud
+  gather_facts: yes
+  roles:
+    - { role: external, tags: [ external, overcloud ] }
+    - { role: prep-overcloud, tags: overcloud }
 
-- import_playbook: tag.yml
-  tags:
-    - tag
+- hosts: localhost
+  gather_facts: yes
+  roles:
+    - { role: overcloud-deploy, tags: overcloud }
 
-- import_playbook: composable.yml
-  tags:
-    - composable
-  when: composable_roles
-
-- import_playbook: external.yml
-  tags:
-    - external
-    - overcloud
-
-- import_playbook: overcloud.yml
-  tags:
-    - overcloud
-
-- import_playbook: post.yml
-  tags:
-    - post
-    - overcloud
+- hosts: undercloud
+  become: yes
+  become_user: stack
+  roles:
+    - { role: post, tags: [ post, overcloud ] }
+    - { role: browbeat, tags: browbeat, when: browbeat is not defined or browbeat == true }
 
 - import_playbook: ocp_on_osp.yml
   tags:
     - shift_stack
   when: shift_stack == true
 
-- import_playbook: browbeat.yml
-  tags:
-    - browbeat
-  when: browbeat is not defined or browbeat == true
-
-- import_playbook: cleanup.yml
-  tags:
-    - cleanup
-    - never
+- hosts: localhost
+  roles:
+    - { role: cleanup, tags: [ cleanup, never ] }

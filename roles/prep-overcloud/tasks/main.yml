@@ -1,0 +1,46 @@
+---
+# tasks file for prep-overcloud
+
+- block:
+    # RHBZ 1756492
+    - name: exclude ceph images
+      lineinfile:
+        path: /home/stack/containers-prepare-parameter.yaml
+        insertafter: "- push_destination: true"
+        line: '    excludes:'
+
+    - name: exclude ceph images
+      lineinfile:
+        path: /home/stack/containers-prepare-parameter.yaml
+        insertafter: "    excludes:"
+        line: '    - ceph'
+
+  when: (ceph_enabled != true) and (osp_release > 13)
+
+- name: get tht version
+  shell: |
+    grep  "heat_template_version" /usr/share/openstack-tripleo-heat-templates/overcloud.j2.yaml | cut -d ':' -f2
+  register: tht_version
+
+- name: set heat_template_version
+  set_fact:
+    heat_template_version: "{{ tht_version.stdout }}"
+
+- name: generate firstboot-nvme.yaml
+  template:
+    src: "firstboot-nvme.yaml.j2"
+    dest: "/home/stack/firstboot-nvme.yaml"
+  when: passthrough_nvme is defined or mount_nvme is defined
+
+- name: generate wipe-disks.yaml
+  template:
+    src: "firstboot-wipe-disks.yaml.j2"
+    dest: "/home/stack/wipe-disks.yaml"
+  when: ceph_enabled and (clean_nodes != true)
+
+- name: generate wipe-disk.sh
+  template:
+    src: "wipe-disk.sh.j2"
+    dest: "/home/stack/wipe-disk.sh"
+  when: ceph_enabled and (clean_nodes != true)
+

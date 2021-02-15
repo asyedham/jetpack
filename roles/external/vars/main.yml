@@ -1,0 +1,4 @@
+---
+# vars file for external
+
+external_interface: "{{ hostvars['localhost']['external_interface'] }}"

@@ -1,0 +1,5 @@
+---
+# vars file for add-undercloud-to-inventory
+
+infrared_hosts_dir: "{{ infrared_workspaces_dir }}/active"
+inventory_file_name: "hosts-updated"

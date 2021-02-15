@@ -1,0 +1,6 @@
+---
+# vars file for set-boot-order
+
+boot_order: director
+chassis_password:  "{{ instackenv_content.nodes[0].pm_password }}"
+

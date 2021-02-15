@@ -1,0 +1,53 @@
+---
+# tasks file for post
+
+- name: create nvme flavor
+  shell: |
+    source /home/stack/overcloudrc
+    openstack flavor create --ram {{ passthrough_nvme.flavor.ram }} --disk {{ passthrough_nvme.flavor.disk }} --vcpus {{ passthrough_nvme.flavor.vcpus }} --public {{ passthrough_nvme.flavor.name }}
+  changed_when: false
+  ignore_errors: true
+  when: passthrough_nvme is defined
+
+- name: set pci passthough for flavor
+  shell: |
+    source /home/stack/overcloudrc
+    openstack flavor set {{ passthrough_nvme.flavor.name }} --property "pci_passthrough:alias"="nvme:1"
+  changed_when: false
+  when: passthrough_nvme is defined
+
+- name: set public_net_name
+  set_fact:
+    public_net_name: "{{ public_net_name|default('public') }}"
+
+- name: create external network
+  shell: |
+    source /home/stack/overcloudrc
+    neutron net-create --router:external=True --provider:network_type flat --provider:physical_network datacentre {{ public_net_name }}
+  changed_when: false
+  ignore_errors: true
+  when: external_network_vlan_id is not defined
+
+- name: create external network
+  shell: |
+    source /home/stack/overcloudrc
+    neutron net-create --router:external=True --provider:network_type vlan --provider:physical_network datacentre --provider:segmentation_id {{ external_network_vlan_id }} {{ public_net_name }}
+  changed_when: false
+  ignore_errors: true
+  when: external_network_vlan_id is defined
+
+- name: set alloc_start
+  vars:
+    allocation_start: "{{ external_net_cidr | ipaddr('net') | ipaddr('2') }}"
+  set_fact:
+    alloc_start: "{{ allocation_start.split('/')[0] }}"
+
+- name: create external subnet
+  vars:
+    gateway_address: "{{ external_gateway.split('/')[0] }}"
+    alloc_end: "{{ ((external_allocation_pools_start | ipaddr('int')) - 1) | ipaddr }}"
+  shell: |
+    source /home/stack/overcloudrc
+    neutron subnet-create --ip_version 4 --gateway {{ gateway_address }} --allocation-pool start={{ alloc_start }},end={{ alloc_end }} --disable-dhcp {{ public_net_name }} {{ external_net_cidr }}
+  changed_when: false
+  ignore_errors: true

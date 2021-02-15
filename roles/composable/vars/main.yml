@@ -1,0 +1,4 @@
+---
+# vars file for composable
+
+machine_types:  "{{ hostvars['localhost']['machine_types'] }}"

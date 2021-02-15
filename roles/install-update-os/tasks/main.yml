@@ -1,0 +1,42 @@
+---
+# tasks file for install-update-os
+#
+# TOdo add the required vars
+- name: set async_install to empty list
+  set_fact:
+    async_install: []
+
+- name: install os on undercloud node
+  vars:
+    needed_os: "RHEL {{ osp_rhel_mapping[osp_release|float] }}"
+    hypervisor_host: "{{ undercloud_hostname }}"
+    hypervisor_password: "{{ ansible_ssh_pass }}"
+  include_tasks: install_os.yml
+
+- name: Wait for undercloud to be available
+  async_status:
+    jid: "{{ item }}"
+  register: install_uc
+  until: install_uc.finished
+  retries: 300
+  delay: 10
+  with_items: "{{ async_install }}"
+
+- block:
+    - name: preapare RHEL79.repo (OSP13)
+      template:
+        src: RHEL.repo.j2
+        dest: /etc/yum.repos.d/RHEL79.repo
+      delegate_to: "{{ undercloud_hostname }}"
+      vars:
+        ansible_python_interpreter: "{{ python_interpreter }}"
+        ansible_user: "root"
+
+    - name: update os to RHEL 7.9
+      shell: |
+        yum update -y
+      delegate_to: "{{ undercloud_hostname }}"
+      vars:
+        ansible_python_interpreter: "{{ python_interpreter }}"
+        ansible_user: "root"
+  when: osp_release == 13

@@ -193,5 +193,8 @@
       set_fact:
         deployment_timeout: 2400
 
+- hosts: localhost
+  gather_facts: yes
+  roles:
+    - { role: add-undercloud-to-inventory }
 
-- import_playbook: add_undercloud_to_inventory.yml
